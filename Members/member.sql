@@ -4,7 +4,7 @@
 --SELECT * FROM Motorbike;
 --SELECT * FROM BikeRental;
 
---Stored Procedure 1--
+--Stored Procedure 1 --
 CREATE PROC RegisterMember
     @mem_nric CHAR(9),
     @mem_name VARCHAR(50),
