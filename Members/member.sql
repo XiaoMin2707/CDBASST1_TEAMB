@@ -120,8 +120,7 @@ RETURN 0 -- 0 => successful
 GO
 
 --Stored Procedure 3--
-
-CREATE OR ALTER PROC UpdateMemberStatus
+CREATE  UpdateMemberStatus
     @mem_id CHAR(6),
     @mem_status VARCHAR(15)
 AS
