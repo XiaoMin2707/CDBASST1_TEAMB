@@ -50,3 +50,39 @@ AS
 RETURN 0 -- 0 => successful
 GO
 
+CREATE PROC uspUpdateBikeStatus
+    @BikeID CHAR(5),
+    @Status VARCHAR(15)
+AS
+    IF @BikeID IS NULL OR @Status IS NULL
+        RETURN -701 -- -701 => missing information
+
+    IF NOT EXISTS (SELECT * FROM Motorbike WHERE bike_id = @BikeID)
+        RETURN -702 -- -702 => bike does not exist
+
+    IF @Status NOT IN ('Available', 'Rented', 'Maintenance', 'Retired')
+        RETURN -703 -- -703 => invalid status
+
+    IF EXISTS (SELECT * FROM Motorbike WHERE bike_id = @BikeID AND bike_status = @Status)
+        RETURN -704 -- -704 => status is already the same
+
+    -- Cannot take a bike out of service while it has an unreturned rental
+    -- (team convention: rent_total_cost = 0 means not yet returned)
+    IF @Status IN ('Maintenance', 'Retired')
+       AND EXISTS (SELECT * FROM BikeRental
+                   WHERE rent_bikeid = @BikeID AND rent_total_cost = 0)
+        RETURN -705 -- -705 => bike has an unreturned rental
+
+    -- A retired bike is permanently out of service
+    IF EXISTS (SELECT * FROM Motorbike WHERE bike_id = @BikeID AND bike_status = 'Retired')
+        RETURN -706 -- -706 => retired bike cannot change status
+
+    UPDATE Motorbike
+    SET bike_status = @Status
+    WHERE bike_id = @BikeID
+
+    IF @@ERROR <> 0
+        RETURN -707 -- -707 => update error
+
+RETURN 0 -- 0 => successful
+GO
