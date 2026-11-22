@@ -31,15 +31,15 @@
 /**                                                              **/
 /**  Procedure status values:                                    **/
 /**     0   successful return                                    **/
-/**   -200  rental ID, return date or km driven not supplied     **/
-/**   -201  rental does not exist                                **/
-/**   -202  rental already returned                              **/
-/**   -203  return date/time not after start date/time           **/
-/**   -204  return date/time is in the future                    **/
-/**   -205  km driven is negative                                **/
-/**   -206  extra km exceeds 255                                 **/
-/**   -207  motorbike has no category (rates not found)          **/
-/**   -208  error while updating the rental                      **/
+/**   -500  rental ID, return date or km driven not supplied     **/
+/**   -501  rental does not exist                                **/
+/**   -502  rental already returned                              **/
+/**   -503  return date/time not after start date/time           **/
+/**   -504  return date/time is in the future                    **/
+/**   -505  km driven is negative                                **/
+/**   -506  extra km exceeds 255                                 **/
+/**   -507  motorbike has no category (rates not found)          **/
+/**   -508  error while updating the rental                      **/
 /**==============================================================**/
 
 USE MBikeRental
@@ -68,14 +68,14 @@ SET @total_cost = 0
 IF @rent_id IS NULL OR @return_date IS NULL OR @km_driven IS NULL
 BEGIN
     PRINT 'Error: Rental ID, return date/time and km driven are all required.'
-    RETURN -200
+    RETURN -500
 END
 
 /** Check 2: The rental must exist **/
 IF NOT EXISTS (SELECT rent_id FROM BikeRental WHERE rent_id = @rent_id)
 BEGIN
     PRINT 'Error: Rental ID ' + CAST(@rent_id AS VARCHAR(10)) + ' does not exist.'
-    RETURN -201
+    RETURN -501
 END
 
 -- Get the rental details needed for the remaining checks and the cost
@@ -90,7 +90,7 @@ BEGIN
     PRINT 'Error: Rental ID ' + CAST(@rent_id AS VARCHAR(10))
         + ' has already been returned (total cost $'
         + CAST(@recorded_cost AS VARCHAR(12)) + ').'
-    RETURN -202
+    RETURN -502
 END
 
 /** Check 4: Return date/time must be after the start date/time **/
@@ -99,7 +99,7 @@ BEGIN
     PRINT 'Error: Return date/time (' + CAST(@return_date AS VARCHAR(20))
         + ') must be after the start date/time ('
         + CAST(@start_date AS VARCHAR(20)) + ').'
-    RETURN -203
+    RETURN -503
 END
 
 /** Check 5: Return date/time cannot be in the future **/
@@ -107,14 +107,14 @@ IF @return_date > GETDATE()
 BEGIN
     PRINT 'Error: Return date/time (' + CAST(@return_date AS VARCHAR(20))
         + ') cannot be in the future.'
-    RETURN -204
+    RETURN -504
 END
 
 /** Check 6: Km driven cannot be negative **/
 IF @km_driven < 0
 BEGIN
     PRINT 'Error: Km driven cannot be negative.'
-    RETURN -205
+    RETURN -505
 END
 
 -- Each booked day gets 20 free km; anything above that is extra km
@@ -131,7 +131,7 @@ BEGIN
         + CAST(@free_km AS VARCHAR(10)) + ' km for '
         + CAST(@duration AS VARCHAR(3)) + ' day(s).'
     SET @extra_km = 0
-    RETURN -206
+    RETURN -506
 END
 
 -- Get the rates of the motorbike's category
@@ -146,7 +146,7 @@ IF @cat_id IS NULL
 BEGIN
     PRINT 'Error: Motorbike ' + @bike_id + ' has no category, so its rates cannot be found.'
     SET @extra_km = 0
-    RETURN -207
+    RETURN -507
 END
 
 -- Due date = 7:00pm on the last booked day
@@ -177,7 +177,7 @@ BEGIN
     SET @extra_km = 0
     SET @hours_late = 0
     SET @total_cost = 0
-    RETURN -208
+    RETURN -508
 END
 
 PRINT 'Rental ID ' + CAST(@rent_id AS VARCHAR(10)) + ' returned successfully.'
@@ -203,7 +203,7 @@ DECLARE @Status INT, @ExtraKm INT, @HoursLate DECIMAL(8,2), @TotalCost SMALLMONE
 INSERT INTO BikeRental (rent_start_date, rent_duration, rent_return_date,
                         rent_extra_km, rent_total_cost, rent_memberid, rent_bikeid)
 VALUES ('2026/11/19 9:00 AM', 2, '2026/11/19 9:00 AM', 0, 0, 'M00002', 'B0008')
-SET @TestRentID = @@IDENTITY
+SET @TestRentID = SCOPE_IDENTITY()
 
 -- Test data 2: a motorbike with no category, and an unreturned rental on it (for Test 8)
 INSERT INTO Motorbike (bike_id, bike_plate_number, bike_brand, bike_model,
@@ -213,44 +213,44 @@ VALUES ('B0099', 'FZZ9999Z', 'Test', 'No Category', 100, 'Available', NULL, 'S01
 INSERT INTO BikeRental (rent_start_date, rent_duration, rent_return_date,
                         rent_extra_km, rent_total_cost, rent_memberid, rent_bikeid)
 VALUES ('2026/11/19 9:00 AM', 1, '2026/11/19 9:00 AM', 0, 0, 'M00002', 'B0099')
-SET @NoCatRentID = @@IDENTITY
+SET @NoCatRentID = SCOPE_IDENTITY()
 
-PRINT '--- Test 1 (fail, -200): rental ID not supplied ---'
+PRINT '--- Test 1 (fail, -500): rental ID not supplied ---'
 EXEC @Status = uspReturnMotorbike NULL, '2026/11/20 8:30 PM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 2 (fail, -201): rental does not exist ---'
+PRINT '--- Test 2 (fail, -501): rental does not exist ---'
 EXEC @Status = uspReturnMotorbike 9999, '2026/11/20 8:30 PM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 3 (fail, -202): rental 1 is already returned ---'
+PRINT '--- Test 3 (fail, -502): rental 1 is already returned ---'
 EXEC @Status = uspReturnMotorbike 1, '2026/11/20 8:30 PM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 4 (fail, -203): return before the start time ---'
+PRINT '--- Test 4 (fail, -503: return before the start time ---'
 EXEC @Status = uspReturnMotorbike @TestRentID, '2026/11/19 8:00 AM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 5 (fail, -204): return date in the future ---'
+PRINT '--- Test 5 (fail, -504): return date in the future ---'
 EXEC @Status = uspReturnMotorbike @TestRentID, '2030/01/01 10:00 AM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 6 (fail, -205): negative km ---'
+PRINT '--- Test 6 (fail, -505): negative km ---'
 EXEC @Status = uspReturnMotorbike @TestRentID, '2026/11/20 8:30 PM', -5,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 7 (fail, -206): extra km over 255 (40 free + 256 extra) ---'
+PRINT '--- Test 7 (fail, -506): extra km over 255 (40 free + 256 extra) ---'
 EXEC @Status = uspReturnMotorbike @TestRentID, '2026/11/20 8:30 PM', 296,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 
-PRINT '--- Test 8 (fail, -207): motorbike has no category ---'
+PRINT '--- Test 8 (fail, -507): motorbike has no category ---'
 EXEC @Status = uspReturnMotorbike @NoCatRentID, '2026/11/20 8:30 PM', 10,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
@@ -265,7 +265,7 @@ PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
 SELECT 'Status' = @Status, 'Extra Km' = @ExtraKm,
        'Hours Late' = @HoursLate, 'Total Cost' = @TotalCost
 
-PRINT '--- Test 10 (fail, -202): returning the same rental twice ---'
+PRINT '--- Test 10 (fail, -502): returning the same rental twice ---'
 EXEC @Status = uspReturnMotorbike @TestRentID, '2026/11/20 8:30 PM', 70,
      @ExtraKm OUTPUT, @HoursLate OUTPUT, @TotalCost OUTPUT
 PRINT 'Status: ' + CAST(@Status AS VARCHAR(5))
