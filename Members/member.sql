@@ -120,34 +120,54 @@ RETURN 0 -- 0 => successful
 GO
 
 --Stored Procedure 3--
-CREATE  UpdateMemberStatus
+CREATE PROCEDURE UpdateMemberStatus
     @mem_id CHAR(6),
     @mem_status VARCHAR(15)
 AS
+BEGIN
     -- Check if member exists
-    IF NOT EXISTS (SELECT * FROM Member WHERE mem_id = @mem_id)
+    IF NOT EXISTS (
+        SELECT * FROM Member
+        WHERE mem_id = @mem_id
+    )
+    BEGIN
+        PRINT 'Member does not exist.'
         RETURN -301 -- -301 => member deos not exist
+    END
 
-    -- Check valid status
+    -- Check valid membership status
     IF @mem_status IS NULL
        OR @mem_status NOT IN ('Pending', 'Active', 'Discontinued')
+    BEGIN
+        PRINT 'Invalid membership status.'
         RETURN -302 -- -302 => invalid status
+    END
 
     -- Check if status is already the same
     IF EXISTS (
         SELECT * FROM Member
-        WHERE mem_id = @mem_id AND mem_status = @mem_status
+        WHERE mem_id = @mem_id
+        AND mem_status = @mem_status
     )
+    BEGIN
+        PRINT 'Member already has this status.'
         RETURN -303 -- -303 => status same
+    END
 
-    -- Update status and effective date
+    -- Update membership status
     UPDATE Member
     SET mem_status = @mem_status,
         mem_status_effective_date = GETDATE()
     WHERE mem_id = @mem_id
 
     IF @@ERROR <> 0
+    BEGIN
+        PRINT 'Error updating member status.'
         RETURN -304 -- -304 => update error
+    END
 
-RETURN 0 -- => successful 
+    PRINT 'Member status updated successfully.'
+    RETURN 0 -- => successful 
+END
 GO
+
