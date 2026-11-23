@@ -42,9 +42,9 @@ AS
 			FROM Member
 			WHERE mem_id = @MemberID
 
-			SELECT @CatLicenceClass = c.cat_licence_class
-			FROM BikeCategory c INNER JOIN Motorbike b
-			ON c.cat_id = b.bike_category
+			SELECT @CatLicenceClass = cat_licence_class
+			FROM BikeCategory
+			WHERE cat_id = @BikeCatID
 
 			IF @MemberLicenceClass = @CatLicenceClass
 				IF @StartDateTime >= GETDATE()
@@ -57,10 +57,6 @@ AS
 						RETURN -411 -- No available bike found
 					ELSE
 					BEGIN
-						
-						UPDATE Motorbike
-						SET bike_status = 'Not Available'
-						WHERE bike_id = @AssignedBike
 						
 						INSERT INTO BikeRental (rent_start_date, rent_duration, rent_return_date, rent_extra_km, rent_total_cost, rent_memberid, rent_bikeid)
 						VALUES (@StartDateTime, @RentDurationDays, '2079-06-06', 0, 0, @MemberID, @AssignedBike)
@@ -85,50 +81,4 @@ RETURN
 GO
 
 --DROP PROC uspCreateReservation
-
--- Case 1: Successful booking
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation 'M00002', 'C1', 'S01', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 2: Bike cateogry does not exist
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00002', 'C9', 'S01', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 3: Member does not exist
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation 'M00010', 'C1', 'S01', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 4: Bike station does not exist
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00002', 'C1', 'S99', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 5: Member not active
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00001', 'C1', 'S01', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 6: Start date in the past
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00002', 'C1', 'S01', '2025-01-01 07:00', 5
-SELECT @Status
-
--- Case 7: No available bike found
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00002', 'C1', 'S01', '2026-12-22 07:00', 5
-SELECT @Status
-
--- Case 8: Bike category and license mismatch
-DECLARE @Status INT
-EXEC @Status = uspCreateReservation
-    'M00005', 'C3', 'S04', '2026-12-22 07:00', 5
-SELECT @Status
 
