@@ -35,7 +35,7 @@ AS
 				ELSE 0
 			  END
 		FROM Member
-		WHERE mem_id = @MemberID;
+		WHERE mem_id = @MemberID
 		IF @MemberAge >= 22 AND @MemberAge <= 65
 		BEGIN
 			SELECT @MemberLicenceClass = mem_licence_class
@@ -62,7 +62,7 @@ AS
 						VALUES (@StartDateTime, @RentDurationDays, '2079-06-06', 0, 0, @MemberID, @AssignedBike)
 
 						IF @@ERROR <> 0
-							RETURN -412 -- Update or insert statement failed
+							RETURN -412 -- Insert statement failed
 					END
 				END
 				ELSE
