@@ -84,7 +84,7 @@ Submission: one `.sql` file + cover page, zipped, uploaded to PoliteMall. 20-min
 - Keep the repo **private**
 
 ## Timeline
-- **~10 Nov:** everyone set up, script loaded, shared rules agreed
-- **~24 Nov:** individual SPs working and tested; views and triggers drafted
-- **~1 Dec:** merge into one script, run from scratch, add comments
-- **Before 6 Dec:** rehearse 20-min demo, zip and submit
+- * 22 Nov: individual SPs working and tested
+- * 29 Nov: views and triggers done
+- * 4 Dec: merge into one script, run from scratch, final testing, presentation prep
+- * 6 Dec: rehearse 20-min demo, zip and submit (deadline)
