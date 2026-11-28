@@ -2,7 +2,7 @@ DECLARE @Status INT
 
 BEGIN TRAN
 -- Case 1: Successful booking
-EXEC @Status = uspCreateReservation 'M00002', 'C1', 'S01', '2026-12-22 07:00', 5
+EXEC @Status = uspCreateReservation 'M00002', 'C1', 'S06', '2026-12-22 07:00', 5
 SELECT @Status
 
 -- Case 2: Bike cateogry does not exist
@@ -45,3 +45,10 @@ EXEC @Status = uspCreateReservation
 SELECT @Status
 
 ROLLBACK TRAN
+
+
+/* SELECT *
+FROM BikeRental
+
+SELECT * 
+FROM Motorbike */

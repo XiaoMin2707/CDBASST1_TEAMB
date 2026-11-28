@@ -1,3 +1,20 @@
+/*  Student ID   : S10273832E                                   */
+/*  Function     : Creating Reservation                         */
+/*  Object       : uspCreateReservation (INSERT on BikeRental)  */
+/*                                                              */
+/*  Purpose:                                                    */
+/*  Creates a motorbike reservation for a member. Validates     */
+/*  the input (member, bike category and station exist), checks */
+/*  that the member is active, aged 22 to 65, holds the licence */
+/*  class required by the bike category, and that the start     */
+/*  date and time is not in the past. It then assigns an        */
+/*  available motorbike of the requested category at the        */
+/*  requested station and inserts a new record into BikeRental  */
+/*  (rent_return_date is set to the placeholder '2079-06-06'    */
+/*  until the bike is returned). The trigger on BikeRental then */
+/*  sets the assigned motorbike's status to 'Not Available'.    */
+/*  Returns a negative error code if any validation fails.      */
+
 CREATE PROC uspCreateReservation (@MemberID CHAR(6) = NULL, @BikeCatID CHAR(2) = NULL , @StationID CHAR(3) = NULL, @StartDateTime SMALLDATETIME = NULL, @RentDurationDays TINYINT = NULL)
 AS
 	DECLARE @MemberAge INTEGER, @MemberLicenceClass VARCHAR(2), @AssignedBike CHAR(5), @MemberStatus VARCHAR(15), @CatLicenceClass VARCHAR(2)
